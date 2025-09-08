@@ -10,11 +10,10 @@ from urllib.error import URLError, HTTPError
 # -------- Config --------
 USER_AGENT = "EE547-HW1-HTTPFetcher/1.0"
 TIMEOUT_SEC = 10
-WORD_RE = re.compile(r"[A-Za-z0-9]+")  # alphanumeric sequences only
+WORD_RE = re.compile(r"[A-Za-z0-9]+")  
 
 # -------- Helpers --------
 def now_utc_iso() -> str:
-    # ISO-8601 UTC with 'Z' suffix, millisecond precision
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 def is_text_content(content_type: str) -> bool:
@@ -37,7 +36,6 @@ def process_url(url: str):
     req = Request(url, headers={"User-Agent": USER_AGENT})
 
     try:
-        # Successful 2xx/3xx
         with urlopen(req, timeout=TIMEOUT_SEC) as resp:
             body = resp.read()
             elapsed_ms = (time.perf_counter() - t0) * 1000.0
@@ -45,14 +43,13 @@ def process_url(url: str):
             content_type = resp.headers.get("Content-Type", "")
 
             if is_text_content(content_type):
-                # Try best-effort UTF-8 decoding (ignore errors); spec doesn't constrain encoding
                 try:
                     text = body.decode("utf-8", errors="ignore")
                     wc = count_words(text)
                 except Exception:
                     wc = 0
             else:
-                wc = None  # non-text => null in JSON
+                wc = None  
 
             return {
                 "url": url,
@@ -65,7 +62,6 @@ def process_url(url: str):
             }, False, None
 
     except HTTPError as e:
-        # HTTPError still gives us a response (e.code, e.headers, e.read())
         body = e.read() or b""
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         content_type = getattr(e, "headers", {}).get("Content-Type", "") if hasattr(e, "headers") else ""
@@ -86,12 +82,11 @@ def process_url(url: str):
             "content_length": int(len(body)),
             "word_count": wc if wc is not None else None,
             "timestamp": timestamp,
-            "error": None  # HTTP error is still a received response, not a transport failure
+            "error": None  
         }
         return rec, False, None
 
     except (URLError, TimeoutError, ValueError, OSError) as e:
-        # True request failure: record error and continue
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         rec = {
             "url": url,
@@ -179,3 +174,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
